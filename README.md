@@ -10,7 +10,7 @@ This Bash script fetches Zendesk ticket details, including Jira IDs from comment
 - `curl` command-line tool
 - `jq` JSON processor (install via package manager)
 
-\#\# Setup
+## Setup
 
 1. **Clone the repository:**
    ```bash
