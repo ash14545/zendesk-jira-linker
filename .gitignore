@@ -3,3 +3,4 @@ jira_ids_results.json
 .env
 update_old_tickets_old.sh
 zendesk_results.json
+checkpoint.txt
