@@ -14,9 +14,9 @@ for cmd in jq parallel; do
 done
 
 # Make sure fetch-tickets.sh and process-tickets.sh are executable
-chmod +x ./zendesk-api/fetch-tickets.sh
-chmod +x ./zendesk-api/process-tickets.sh
-chmod +x ./zendesk-api/process-ticket.sh
+chmod +x ./api/fetch-tickets.sh
+chmod +x ./api/process-tickets.sh
+chmod +x ./api/process-ticket.sh
 
 # Create a directory for results if it does not exist
 results_dir="results"
@@ -32,7 +32,7 @@ while [ -n "$next_url" ]; do
   echo "Fetching page $page_number..."
 
   # Fetch data from the API
-  response=$(./zendesk-api/fetch-tickets.sh "$next_url")
+  response=$(./api/fetch-tickets.sh "$next_url")
   
   # Check if the request was successful
   if [ $? -ne 0 ]; then
@@ -72,7 +72,7 @@ echo "Total pages fetched: $((page_number - 1))"
 
 # Process tickets using parallel
 echo "Processing tickets..."
-cat "$output_file" | jq -r '.[] | "\(.ticket_id) \(.issue_key)"' | parallel --colsep ' ' ./zendesk-api/process-tickets.sh
+cat "$output_file" | jq -r '.[] | "\(.ticket_id) \(.issue_key)"' | parallel --colsep ' ' ./api/process-tickets.sh
 
 # Print completion message
 echo "Ticket processing completed."

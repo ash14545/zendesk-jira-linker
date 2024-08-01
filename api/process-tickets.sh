@@ -10,4 +10,4 @@ ticket_id=$1
 issue_key=$2
 
 # Call process-ticket.sh with the provided ticket_id and issue_key
-./zendesk-api/process-ticket.sh "$ticket_id" "$issue_key"
+./api/process-ticket.sh "$ticket_id" "$issue_key"
