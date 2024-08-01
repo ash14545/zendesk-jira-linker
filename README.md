@@ -27,6 +27,8 @@ Notes:
 
 How to set up .env:
 
+```
 SUBDOMAIN=YOUR-SUBDOMAIN
 EMAIL=YOUR-EMAIL
 API_TOKEN=YOUR-API-TOKEN
+```
