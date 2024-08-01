@@ -20,6 +20,7 @@ Requirements:
 * Jira API
 * homebrew
 * parallel
+* jq
 
 Notes:
 
