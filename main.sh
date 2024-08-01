@@ -6,15 +6,17 @@ if [ -f .env ]; then
 fi
 
 # Check for required dependencies
-for cmd in jq; do
+for cmd in jq parallel; do
   if ! command -v $cmd &> /dev/null; then
     echo "$cmd is not installed. Please install it using apt-get. e.g., sudo apt-get install $cmd"
     exit 1
   fi
 done
 
-# Make sure fetch-tickets.sh is executable
+# Make sure fetch-tickets.sh and process-tickets.sh are executable
 chmod +x ./zendesk-api/fetch-tickets.sh
+chmod +x ./zendesk-api/process-tickets.sh
+chmod +x ./zendesk-api/process-ticket.sh
 
 # Create a directory for results if it does not exist
 results_dir="results"
@@ -42,6 +44,9 @@ while [ -n "$next_url" ]; do
   results=$(echo "$response" | jq '.links // []')
   all_results=$(echo "$all_results" | jq -c '. + '"$results")
   
+  # Print a checkpoint message
+  echo "Fetched page $page_number"
+
   # Extract the after_cursor URL for the next page
   next_page=$(echo "$response" | jq -r '.meta.after_cursor // empty')
 
@@ -64,3 +69,10 @@ echo "$all_results" | jq '.' > "$output_file"
 # Print the final results
 echo "All results from Zendesk API saved to $output_file"
 echo "Total pages fetched: $((page_number - 1))"
+
+# Process tickets using parallel
+echo "Processing tickets..."
+cat "$output_file" | jq -r '.[] | "\(.ticket_id) \(.issue_key)"' | parallel --colsep ' ' ./zendesk-api/process-tickets.sh
+
+# Print completion message
+echo "Ticket processing completed."
