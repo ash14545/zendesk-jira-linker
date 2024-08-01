@@ -3,4 +3,4 @@
 /zendesk-api/sample/
 .DS_Store
 zendesk-api/fetched_results.json
-/results
+/results/
