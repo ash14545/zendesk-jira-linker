@@ -1,19 +1,13 @@
 #!/bin/bash
 
-# Check if the batch file is provided
-if [ $# -ne 1 ]; then
-  echo "Usage: $0 <batch_file>"
-  exit 1
-fi
+# Read the batch data from stdin
+batch=$(cat)
 
-batch_file=$1
+# Process each ticket in the batch
+echo "$batch" | jq -c '.[]' | while read ticket; do
+    ticket_id=$(echo "$ticket" | jq -r '.ticket_id')
+    issue_key=$(echo "$ticket" | jq -r '.issue_key')
 
-# Check if the file exists
-if [ ! -f "$batch_file" ]; then
-  echo "File not found: $batch_file"
-  exit 1
-fi
-
-# Output the contents of the batch file
-echo "Contents of $batch_file:"
-cat "$batch_file"
+    # Call process-ticket.sh with the ticket_id and issue_key
+    ./api/process-ticket.sh "$ticket_id" "$issue_key"
+done
