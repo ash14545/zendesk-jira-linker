@@ -63,16 +63,44 @@ done
 
 # Save all results to a file with timestamp
 timestamp=$(date +"%Y%m%d%H%M%S")
-output_file="$results_dir/$timestamp.json"
+output_file="$results_dir/results.json"
 echo "$all_results" | jq '.' > "$output_file"
 
 # Print the final results
 echo "All results from Zendesk API saved to $output_file"
 echo "Total pages fetched: $((page_number - 1))"
 
-# Process tickets using parallel
-echo "Processing tickets..."
-cat "$output_file" | jq -r '.[] | "\(.ticket_id) \(.issue_key)"' | parallel --colsep ' ' ./api/process-tickets.sh
+# Create temporary directory for batch files
+tmp_dir="tmp"
+mkdir -p "$tmp_dir"
 
-# Print completion message
-echo "Ticket processing completed."
+# Split tickets into batches
+batch_size=50
+total_tickets=$(cat "$output_file" | jq length)
+batch_count=$(( (total_tickets + batch_size - 1) / batch_size ))
+
+echo "Total tickets: $total_tickets"
+echo "Total batches: $batch_count"
+
+# Create an array to hold the batches
+declare -a batches
+
+# Generate batches
+for ((i = 0; i < batch_count; i++)); do
+  start_index=$((i * batch_size))
+  end_index=$(((i + 1) * batch_size - 1))
+
+  batch_file="$tmp_dir/batch_$i.json"
+  jq -c ".[$start_index:$((end_index + 1))]" "$output_file" > "$batch_file"
+  
+  batches+=("$batch_file")
+done
+
+# Print each batch file content
+echo "Processing batches..."
+for batch in "${batches[@]}"; do
+  echo "Batch file: $batch"
+  jq -r '.[] | "\(.ticket_id) \(.issue_key)"' "$batch"
+done
+
+echo "Batch processing completed."

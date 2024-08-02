@@ -1,13 +1,19 @@
 #!/bin/bash
 
-# Check if the ticket_id and issue_key are provided
-if [ $# -ne 2 ]; then
-  echo "Usage: $0 <ticket_id> <issue_key>"
+# Check if the batch file is provided
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 <batch_file>"
   exit 1
 fi
 
-ticket_id=$1
-issue_key=$2
+batch_file=$1
 
-# Call process-ticket.sh with the provided ticket_id and issue_key
-./api/process-ticket.sh "$ticket_id" "$issue_key"
+# Check if the file exists
+if [ ! -f "$batch_file" ]; then
+  echo "File not found: $batch_file"
+  exit 1
+fi
+
+# Output the contents of the batch file
+echo "Contents of $batch_file:"
+cat "$batch_file"
