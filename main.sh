@@ -18,9 +18,10 @@ chmod +x ./api/fetch-tickets.sh
 chmod +x ./api/process-tickets.sh
 chmod +x ./api/process-ticket.sh
 
-# Create a directory for results if it does not exist
+# Create directories for results and tmp if they do not exist
 results_dir="results"
-mkdir -p "$results_dir"
+tmp_dir="tmp"
+mkdir -p "$results_dir" "$tmp_dir"
 
 # Initialize variables
 next_url="https://$ZENDESK_SUBDOMAIN.zendesk.com/api/v2/jira/links.json"
@@ -61,22 +62,33 @@ while [ -n "$next_url" ]; do
   ((page_number++))
 done
 
-# Save all results to a file
-output_file="$results_dir/results.json"
+# Save all results to a file with timestamp
+timestamp=$(date +"%Y%m%d%H%M%S") # this will be used for final product
+output_file="$results_dir/results.json" # fetched data here
 echo "$all_results" | jq '.' > "$output_file"
 
-# Split results into batches of 50 tickets each and send to process-tickets.sh
+# Print the final results
+echo "All results from Zendesk API saved to $output_file"
+echo "Total pages fetched: $((page_number - 1))"
+
+# Split tickets into batches of 50 and save them in tmp
 echo "Processing batches..."
-batch_size=50
-batches=()
-total_tickets=$(echo "$all_results" | jq length)
-for ((i=0; i<total_tickets; i+=batch_size)); do
-  batch=$(echo "$all_results" | jq -c ".[$i:$((i + batch_size))] | map({ticket_id: .ticket_id, issue_key: .issue_key})")
-  batches+=("$batch")
+
+# Create a temporary directory if it doesn't exist
+mkdir -p tmp
+
+# Filter and split the data into batches
+echo "$all_results" | jq -c '. | map({ticket_id, issue_key}) | .[]' | split -l 50 -a 3 -d - tmp/batch_
+
+# Rename split files to add .json extension
+for file in tmp/batch_*; do
+  mv "$file" "${file}.json"
 done
 
-for batch in "${batches[@]}"; do
-  echo "$batch" | ./api/process-tickets.sh
-done
+# Process each batch using parallel
+ls tmp/batch_*.json | parallel --colsep ' ' ./api/process-tickets.sh
 
-echo "Batch processing completed."
+# Print completion message
+echo "All batch processing has been completed."
+
+rm -rf tmp
